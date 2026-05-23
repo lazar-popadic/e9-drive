@@ -7,23 +7,20 @@
 
 #include "main.h"
 
-double trajectory_synthesis(double v_max, double v_ref_prev, double v_end,
-		double acc, double acc_stop, double dist, double dt) {
-	double dist_stop = (v_max - v_end) * (v_max + v_end) / (2 * acc_stop);
-	double v_ref_dist = v_end;
+double trajectory_synthesis(double v_max, double v_ref_prev, double acc,
+		double dist, double dt) {
+	double dist_stop = v_max * v_max / (2 * acc);
+	double v_ref_dist = 0.0;
 	if (dist_stop > 0.0) { // jedini slucaj kada ovo nije ispunjeno je ako je v_end >= v_max
 		double dist_norm = clamp(dist / dist_stop, 0.0, 1.0);
-		v_ref_dist = v_end + (v_max - v_end) * dist_norm;
+		v_ref_dist = v_max * dist_norm;
 	}
 	double v_ref_acc = fmin(v_ref_prev + acc * dt, v_max);
 	return fmin(v_ref_acc, v_ref_dist);
 }
 
-double compute_v_peak(double v0, double v_end, double v_max, double a,
-		double a_stop, double dist) {
-	double A = 2.0 * dist * a * a_stop + a_stop * v0 * v0 + a * v_end * v_end;
-	double B = a + a_stop;
-	double v_peak = sqrt(fmax(0.0, A / B));
+double compute_v_peak(double v_max, double a, double dist) {
+	double v_peak = sqrt(dist * a);
 	return fmin(v_peak, v_max);
 }
 

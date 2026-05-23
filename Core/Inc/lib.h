@@ -37,20 +37,13 @@ typedef struct st_move {
 	int8_t direction;
 	double v_des;
 	double w_des;
+	double wheel_accel;
 	// automatically set
 	uint8_t index;
-
-	double v_0;
-	double v_end;
-	double a;
-	double a_stop;
 	double v_max;
-
-	double w_0;
-	double w_end;
-	double alpha;
-	double alpha_stop;
 	double w_max;
+	double a;
+	double alpha;
 	// feedback
 	int8_t status;
 } move;
@@ -135,10 +128,9 @@ pose_2D_stamped
 get_odom();
 
 //signal.h
-double trajectory_synthesis(double v_ref, double v_ref_prev, double v_end,
-		double acc, double acc_stop, double dist, double dt);
-double compute_v_peak(double v0, double v_end, double v_max, double a,
-		double a_stop, double dist);
+double trajectory_synthesis(double v_max, double v_ref_prev, double acc,
+		double dist, double dt);
+double compute_v_peak(double v_max, double a, double dist);
 void
 wrap180(volatile double *signal);
 void
