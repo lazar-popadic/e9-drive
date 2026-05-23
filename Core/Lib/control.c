@@ -18,7 +18,6 @@ move moves_[MAX_NUM_OF_MOVES];
 action ctrl_action_;
 uint8_t move_index_ = 0;
 uint16_t prev_action_id_ = 0xffff;
-double first_x_ = 0.0, first_y_ = 0.0, first_phi_ = 0.0;
 int8_t ctrl_move_type_ = -1;
 
 static pose_2D_stamped odom_;
@@ -61,9 +60,6 @@ void move_init() {
 
 void action_init(action *action_ptr) {
 	move_index_ = 0;
-	first_x_ = get_odom().x;
-	first_y_ = get_odom().y;
-	first_phi_ = get_odom().phi;
 	action_ptr->status = 0;
 	for (uint8_t mi = 0; mi < action_ptr->num_of_moves; mi++) {
 		move *src = &action_ptr->moves_ptr[mi];
@@ -95,17 +91,17 @@ void action_init(action *action_ptr) {
 			if (prev) {
 				x_e = src->x - prev->x;
 				y_e = src->y - prev->y;
-				src->phi = prev->phi;
-			} else {
-				x_e = src->x - first_x_;
-				y_e = src->y - first_y_;
-				src->phi = first_phi_;
-			}
-			move_distance = sqrt(x_e * x_e + y_e * y_e);
-			if (prev)
 				prev_phi = prev->phi;
-			else
-				prev_phi = first_phi_;
+			} else {
+				x_e = src->x - get_odom().x;
+				y_e = src->y - get_odom().y;
+				prev_phi = get_odom().phi;
+			}
+			src->phi = wrap(
+					atan2(y_e, x_e) - prev_phi
+							+ (src->direction - 1) * M_PI * 0.5, -M_PI,
+					M_PI);
+			move_distance = sqrt(x_e * x_e + y_e * y_e);
 			move_phi = wrap(src->phi - prev_phi, -M_PI, M_PI);
 
 			src->a = fmin(src->wheel_accel, A_MAX_);
@@ -132,9 +128,9 @@ void action_init(action *action_ptr) {
 				src->x = prev->x;
 				src->y = prev->y;
 			} else {
-				prev_phi = first_phi_;
-				src->x = first_x_;
-				src->y = first_y_;
+				prev_phi = get_odom().phi;
+				src->x = get_odom().x;
+				src->y = get_odom().y;
 			}
 			move_phi = wrap(src->phi - prev_phi, -M_PI, M_PI);
 
