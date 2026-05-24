@@ -22,6 +22,7 @@ int8_t ctrl_move_type_ = -1;
 
 static pose_2D_stamped odom_;
 double v_ref_ = 0.0, w_ref_ = 0.0;
+double x0_ = 0.0, y0_ = 0.0, phi0_ = 0.0;
 double v_ctrl_ = 0.0, w_ctrl_ = 0.0;
 double v_ref_ff_ = 0.0, w_ref_ff_ = 0.0;
 double v_ref_fb_ = 0.0, w_ref_fb_ = 0.0;
@@ -88,14 +89,17 @@ void action_init(action *action_ptr) {
 			break;
 		case 1:
 //			go_to_xy(dt);
+			x0_ = get_odom().x;
+			y0_ = get_odom().y;
+			phi0_ = get_odom().phi;
 			if (prev) {
 				x_e = src->x - prev->x;
 				y_e = src->y - prev->y;
 				prev_phi = prev->phi;
 			} else {
-				x_e = src->x - get_odom().x;
-				y_e = src->y - get_odom().y;
-				prev_phi = get_odom().phi;
+				x_e = src->x - x0_;
+				y_e = src->y - y0_;
+				prev_phi = phi0_;
 			}
 			src->phi = wrap(
 					atan2(y_e, x_e) - prev_phi
