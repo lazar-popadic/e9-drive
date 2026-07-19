@@ -95,14 +95,12 @@ time_stop();
 uint32_t get_time();
 
 // encoder.h
-int16_t
-cnt_difference(TIM_HandleTypeDef *htim, volatile int16_t *cur);
 void
 enc_start(TIM_HandleTypeDef *htim);
 void
 enc_init();
 double
-enc_velocity(int16_t diff, double deltaT, uint16_t impulse_per_2Pi);
+enc_velocity(TIM_HandleTypeDef *htim, double dt, uint16_t impulse_per_2Pi);
 
 // pwm.h
 void

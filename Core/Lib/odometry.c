@@ -7,55 +7,39 @@
 
 #include "main.h"
 
-double L_wheel;
-double L_wheel_recip;
-double d_odom_left;
-double d_odom_right;
+double L_odom, L_odom_recip, d_odom_left, d_odom_right;
 
 double mid_angle;
-int16_t v_l_diff = 0;
-int16_t v_r_diff = 0;
-
-volatile int16_t enc_l_sum;		// [inc]
-volatile int16_t enc_r_sum;		// [inc]
-
 volatile double v_right, v_left;
+volatile double dis_right, dis_left;
 volatile pose_2D_stamped odom;
 
-void
-odometry_init ()
-{
-	L_wheel = 0.2993;																	// [m], rastojanje izmedju odometrijskih tockova
-	L_wheel_recip = 1 / L_wheel;										// [1/m]
-	d_odom_left = 0.07509;															// [m]
-	d_odom_right = 0.07528;															// [m]
-	enc_r_sum = 0;
-	enc_l_sum = 0;
+void odometry_init() {
+	L_odom = 0.2993;			// [m], rastojanje izmedju odometrijskih tockova
+	L_odom_recip = 1.0 / L_odom;	// [1/m]
+	d_odom_left = 0.07509;			// [m]
+	d_odom_right = 0.07528;			// [m]
 }
 
-void
-update_odom (double dt)
-{
-	// TODO: proveri da li cnt_difference dobro hendluje over/underflow (da nije to mozda izvor greske)
-	v_r_diff = cnt_difference (&htim5, &enc_r_sum);					// [inc]
-	v_l_diff = cnt_difference (&htim3, &enc_l_sum);
-	v_right = enc_velocity (v_r_diff, dt, 8192) * d_odom_right;		// [m/s]
-	v_left = enc_velocity (v_l_diff, dt, 8192) * d_odom_left;
+void update_odom(double dt) {
+	v_right = enc_velocity(&htim5, dt, 8192) * d_odom_right;		// [m/s]
+	v_left = enc_velocity(&htim3, dt, 8192) * d_odom_left;
 
-	odom.v = (v_right + v_left) * 0.5;								// [m/s]
-	odom.w = (v_right - v_left) * L_wheel_recip;					// [rad/s]
-	mid_angle = (odom.phi + odom.w * 0.5 * dt);						// [rad + rad/s * s = rad]
+	dis_right += v_right;
+	dis_left += v_left;
 
-	odom.x += odom.v * cos (mid_angle) * dt;						// [m/s * s = m]
-	odom.y += odom.v * sin (mid_angle) * dt;
-	odom.phi += odom.w * dt;										// [s * rad/s = rad]
+	odom.v = (v_right + v_left) * 0.5;				// [m/s]
+	odom.w = (v_right - v_left) * L_odom_recip;		// [rad/s]
+	mid_angle = (odom.phi + odom.w * 0.5 * dt);		// [rad]
 
-	wrap2Pi (&odom.phi);
+	odom.x += odom.v * cos(mid_angle) * dt;			// [m]
+	odom.y += odom.v * sin(mid_angle) * dt;
+	odom.phi += odom.w * dt;						// [rad]
+
+	wrap2Pi(&odom.phi);
 	odom.time_ms = get_time();
 }
 
-pose_2D_stamped
-get_odom()
-{
+pose_2D_stamped get_odom() {
 	return odom;
 }
